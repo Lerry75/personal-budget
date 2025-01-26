@@ -1,0 +1,15 @@
+rules:
+  - type: "startswith"
+    pattern: "NETTO"
+    category: "Groceries::Supermarket"
+
+  - type: "contains"
+    pattern: "BAGSVA"
+    category: "Health::Beauty"
+
+  - type: "endswith"
+    pattern: "SOE"
+    category: "Groceries::Supermarket"
+
+  - type: "default"
+    category: "Uncategorized"
