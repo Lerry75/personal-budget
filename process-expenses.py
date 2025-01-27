@@ -15,7 +15,64 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
-def load_category_rules(yaml_path: str):
+def load_config(config_file: str) -> dict:
+    if not os.path.exists(config_file):
+        logging.error(f"Config file not found: {config_file}")
+        sys.exit(1)
+
+    with open(config_file, 'r', encoding='utf-8') as f:
+        try:
+            config = yaml.safe_load(f)
+        except Exception as e:
+            logging.error(f"Failed parsing config file: {e}")
+            sys.exit(1)
+
+    if 'paths' not in config:
+        logging.error(f"Missing 'paths' key in {config_file}.")
+        sys.exit(1)
+
+    setup_paths(config['paths'])
+
+    return config['paths']
+
+def setup_paths(paths: dict):
+    # Create input folder if not exist
+    input_folder = paths.get('input_folder')
+    if input_folder and not os.path.exists(input_folder):
+        try:
+            os.makedirs(input_folder)
+            logging.info(f"Created folder: {input_folder}")
+        except Exception as e:
+            logging.error(f"Failed to create folder {input_folder}: {e}")
+            sys.exit(1)
+
+    # Create processed folder if not exist
+    processed_folder = paths.get('processed_folder')
+    if processed_folder and not os.path.exists(processed_folder):
+        try:
+            os.makedirs(processed_folder)
+            logging.info(f"Created folder: {processed_folder}")
+        except Exception as e:
+            logging.error(f"Failed to create folder {processed_folder}: {e}")
+            sys.exit(1)
+
+    # Create output folder if not exist
+    output_folder = paths.get('output_folder')
+    if output_folder and not os.path.exists(output_folder):
+        try:
+            os.makedirs(output_folder)
+            logging.info(f"Created folder: {output_folder}")
+        except Exception as e:
+            logging.error(f"Failed to create folder {output_folder}: {e}")
+            sys.exit(1)
+
+    # Check category file
+    category_file = paths.get('category_file')
+    if not category_file or not os.path.exists(category_file):
+        logging.error(f"category_file does not exist or not specified: {category_file}")
+        sys.exit(1)
+
+def load_category_rules(yaml_path: str) -> list:
     # Loads category classification rules from a YAML file.
     if not os.path.exists(yaml_path):
         logging.error(f"Category rules file not found: {yaml_path}")
@@ -28,7 +85,7 @@ def load_category_rules(yaml_path: str):
         sys.exit(1)
     return rules
 
-def classify_expense(note: str, rules: list) -> str:
+def categorize_expense(note: str, rules: list) -> str:
     # Catecorize a single note against the loaded rules.
     note_upper = note.strip().upper() if note else ""
 
@@ -72,7 +129,7 @@ def parse_and_filter_amount(amt_str: str) -> float:
         logging.warning(f"Could not parse amount: {amt_str}")
         return None
     
-def get_person(input_file: str):
+def get_person(input_file: str) -> str:
     filename = os.path.basename(input_file)
     parts = filename.split("-")
     if len(parts) > 1:
@@ -93,24 +150,11 @@ def format_amount(value: float) -> str:
 
 def process_file(
     input_file: str,
-    category_file: str,
+    category_rules: list,
     output_folder: str,
     file_index: int
 ):
-    """
-    Reads the input_file CSV. For each row:
-      - Filters out rows where original amount is > 0
-      - Parses date (YYYY/MM/DD) -> Year, Month
-      - Converts negative amounts -> positive float
-      - Classifies note using categories.yaml
-      - Writes final CSV: 'Expenses-{Person}-{yyyy}{MM}{dd}-{hh}{mm}-{index}.csv'
-      - Move source csv to an archive folder
-    """
-    # oad category rules
-    rules = load_category_rules(category_file)
-    logging.info(f"Loaded {len(rules)} category rules from {category_file}")
-
-    # Read CSV
+    # Read input CSV
     if not os.path.exists(input_file):
         logging.error(f"Input file not found: {input_file}")
         return
@@ -125,7 +169,7 @@ def process_file(
         logging.error("CSV must have at least 'Booking date', 'Amount', 'Title' columns.")
         return
 
-    # Parse date
+    # Parse date (assume data is in yyyy/MM/dd format)
     df['Date_parsed'] = pd.to_datetime(df['Booking date'], format='%Y/%m/%d', errors='coerce')
     df['Year'] = df['Date_parsed'].dt.year.fillna(0).astype(int).astype(str)
     df['Month'] = df['Date_parsed'].dt.month_name().str[:3].fillna('')
@@ -141,10 +185,10 @@ def process_file(
     # Convert the numeric float to a string with comma decimals for final display
     df['Amount_clean'] = df['Amount_float'].apply(format_amount)
 
-    # 6) Categorize the note
-    df['Category'] = df['Title'].apply(lambda nt: classify_expense(nt, rules))
+    # Categorize the note
+    df['Category'] = df['Title'].apply(lambda nt: categorize_expense(nt, category_rules))
 
-    # 7) Set Person, Type
+    # Set Person, Type
     person_value = get_person(input_file)
     if 'Person' not in df.columns:
         df['Person'] = person_value
@@ -161,14 +205,12 @@ def process_file(
     final_df.rename(columns={"Amount_clean": "Amount DKK"}, inplace=True)
     final_df.rename(columns={"Title": "Notes"}, inplace=True)
 
-    # Output file name
-    os.makedirs(output_folder, exist_ok=True)
+    # Writes output CSV: 'Expenses-{Person}-{yyyy}{MM}{dd}-{hh}{mm}-{index}.csv'
     output_base = "Expenses"
     output_endname = datetime.now().strftime("%Y%m%d-%H%M")
     output_name = f"{output_base}-{person_value}-{output_endname}-{file_index}.csv"
     output_path = os.path.join(output_folder, output_name)
 
-    # Write CSV with semicolon delimiter
     try:
         final_df.to_csv(output_path, sep=';', index=False)
         logging.info(f"Processed {input_file} -> {output_path} (kept {len(final_df)} rows)")
@@ -180,7 +222,6 @@ def move_file(
     output_folder: str
 ):
     try:
-        os.makedirs(output_folder, exist_ok=True)
         file_name = os.path.basename(input_file)
         destination = os.path.join(output_folder, file_name)
 
@@ -192,16 +233,16 @@ def move_file(
         logging.error(f"Error: {str(e)}")
 
 def main():
-    input_folder = "./input-csv"
-    category_file = "./categories.yaml"
-    output_folder = "./output-csv"
-    processed_folder = "./processed"
+    config_file = "./config.yaml"
+    paths = load_config(config_file)
 
-    file_index = 1
-    for csv_file in glob.glob(os.path.join(input_folder, "*.csv")):
-        process_file(csv_file, category_file, output_folder, file_index)
-        move_file(csv_file, processed_folder)
-        file_index += 1
+    # Load category rules
+    rules = load_category_rules(paths['category_file'])
+    logging.info(f"Loaded {len(rules)} category rules from {paths['category_file']}")
+
+    for index, csv_file in enumerate(glob.glob(os.path.join(paths['input_folder'], "*.csv"))):
+        process_file(csv_file, rules, paths['output_folder'], index)
+        move_file(csv_file, paths['processed_folder'])
 
 if __name__ == "__main__":
     main()

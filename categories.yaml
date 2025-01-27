@@ -1,11 +1,34 @@
 rules:
   - type: "startswith"
-    pattern: "NETTO"
-    category: "Groceries::Supermarket"
+    pattern: "Andersen Biler"
+    category: "Transportation::Car Maintenance"
 
   - type: "contains"
-    pattern: "BAGSVA"
-    category: "Health::Beauty"
+    pattern: "LAGKAGEHUSET"
+    category: "Groceries::Other Food"
+
+  - type: "contains"
+    pattern: "MAXI ZOO"
+    category: "Miscellaneous::Dog"
+
+  - type: "contains"
+    pattern: "7-ELEVEN"
+    category: "Groceries::Other Food"
+
+  - type: "contains"
+    pattern: "AMAGER BIO"
+    category: "Entertainment & Recreation::Personal & Family Activities"
+
+  - type: "contains"
+    pattern: "BAGSVAERD SVOEMMEHAL"
+    category: "Entertainment & Recreation::Personal & Family Activities"
+
+  - type: "contains"
+    pattern: "BAKKEN.DK"
+    category: "Entertainment & Recreation::Personal & Family Activities"
+
+
+
 
   - type: "endswith"
     pattern: "SOE"
