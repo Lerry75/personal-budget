@@ -27,12 +27,86 @@ rules:
     pattern: "BAKKEN.DK"
     category: "Entertainment & Recreation::Personal & Family Activities"
 
+  - type: "contains"
+    pattern: "GOKAR"
+    category: "Entertainment & Recreation::Personal & Family Activities"
 
+  - type: "contains"
+    pattern: "BAUHAUS"
+    category: "Housing::Other Housing"
 
+  - type: "contains"
+    pattern: "BEAUTY LINE"
+    category: "Personal Care::Haircuts & Grooming"
 
-  - type: "endswith"
-    pattern: "SOE"
+  - type: "contains"
+    pattern: "EVIDA SERVICE"
+    category: "Housing::Heating (OK AMBA + Evida)"
+
+  - type: "contains"
+    pattern: "FASTSPEED"
+    category: "Communication::Internet"
+
+  - type: "contains"
+    pattern: "FIRST MARINE"
+    category: "Insurances::A-kasse"
+
+  - type: "contains"
+    pattern: "FTF-A"
+    category: "Insurances::A-kasse"
+
+  - type: "contains"
+    pattern: "betaling GLADSAXE KOMMUNE"
+    category: "Housing::Property Tax"
+
+  - type: "contains"
+    pattern: "LB FORSIKRING A/S"
+    category: "Insurances::Accident insurance"
+
+  - type: "contains"
+    pattern: "NORDEA KREDIT - REAL"
+    category: "Housing::Mortgage"
+
+  - type: "contains"
+    pattern: "NOVAFOS"
+    category: "Housing::Water (Novafos)"
+
+  - type: "contains"
+    pattern: "OK A.M.B.A."
+    category: "Housing::Heating (OK AMBA + Evida)"
+
+  - type: "contains"
+    pattern: "SKATTESTYRELSEN MOTO"
+    category: "Transportation::Tax (Car)"
+
+  - type: "contains"
+    pattern: "CPH Parkering"
+    category: "Transportation::Parking"
+
+  - type: "contains"
+    pattern: "EasyPark"
+    category: "Transportation::Parking"
+
+  - type: "contains"
+    pattern: "KANPLA"
+    category: "Childcare & Activities::Canteen"
+
+  - type: "contains"
+    pattern: "FOETEX"
     category: "Groceries::Supermarket"
+
+  - type: "contains"
+    pattern: "KVICKLY"
+    category: "Groceries::Supermarket"
+
+  - type: "startswith"
+    pattern: "MENY"
+    category: "Groceries::Supermarket"
+
+  - type: "startswith"
+    pattern: "NETTO"
+    category: "Groceries::Supermarket"
+
 
   - type: "default"
     category: "Uncategorized"

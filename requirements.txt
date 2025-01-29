@@ -1,2 +1,4 @@
 pandas
 pyyaml
+scikit-learn
+joblib

@@ -1,0 +1,26 @@
+rules:
+  - conditions:
+      - column: "Notes"
+        operator: "contains"
+        value: "GLADSAXE KOMMUNE"
+      - column: "Person"
+        operator: "equals"
+        value: "Francesco"
+    category: "Housing::Property Tax"
+
+  - conditions:
+      - column: "Notes"
+        operator: "contains"
+        value: "KANPLA"
+      - column: "Amount"
+        operator: "greater_than"
+        value: 1
+    category: "Childcare & Activities::Canteen"
+
+  - conditions:
+      - column: "Notes"
+        operator: "startswith"
+        value: "NETTO"
+    category: "Groceries::Supermarket"
+
+  - category: "Uncategorized"

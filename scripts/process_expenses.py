@@ -1,13 +1,15 @@
 import os
 import sys
-import csv
 import logging
 import glob
 import shutil
 from datetime import datetime
-
 import pandas as pd
 import yaml
+import joblib
+from categorymap import load_category_rules, categorize_row
+
+use_ml_model = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,6 +18,8 @@ logging.basicConfig(
 )
 
 def load_config(config_file: str) -> dict:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_file = os.path.join(script_dir, '..', config_file)
     if not os.path.exists(config_file):
         logging.error(f"Config file not found: {config_file}")
         sys.exit(1)
@@ -31,7 +35,18 @@ def load_config(config_file: str) -> dict:
         logging.error(f"Missing 'paths' key in {config_file}.")
         sys.exit(1)
 
+    # Replacing wiwth absolute path
+    for key in config['paths']:
+        config['paths'][key] = os.path.join(script_dir, "..", config['paths'][key])
+
     setup_paths(config['paths'])
+
+    # Load feature flag
+    global use_ml_model
+    if 'app' in config:
+        if 'use_ml_model' in config['app']:
+            if config['app']['use_ml_model']:
+                use_ml_model = True
 
     return config['paths']
 
@@ -72,45 +87,6 @@ def setup_paths(paths: dict):
         logging.error(f"category_file does not exist or not specified: {category_file}")
         sys.exit(1)
 
-def load_category_rules(yaml_path: str) -> list:
-    # Loads category classification rules from a YAML file.
-    if not os.path.exists(yaml_path):
-        logging.error(f"Category rules file not found: {yaml_path}")
-        sys.exit(1)
-    with open(yaml_path, 'r', encoding='utf-8') as f:
-        config = yaml.safe_load(f)
-    rules = config.get('rules', [])
-    if not rules:
-        logging.error("No 'rules' key found in the YAML or it's empty.")
-        sys.exit(1)
-    return rules
-
-def categorize_expense(note: str, rules: list) -> str:
-    # Catecorize a single note against the loaded rules.
-    note_upper = note.strip().upper() if note else ""
-
-    for rule in rules:
-        rule_type = rule.get('type', '').lower()
-        pattern = rule.get('pattern', '')
-        category = rule.get('category', 'Uncategorized')
-        if rule_type == 'startswith':
-            if note_upper.startswith(pattern.upper()):
-                return category
-        elif rule_type == 'contains':
-            if pattern.upper() in note_upper:
-                return category
-        elif rule_type == 'endswith':
-            if note_upper.endswith(pattern.upper()):
-                return category
-        elif rule_type == 'regex':
-            import re
-            if re.search(pattern, note, re.IGNORECASE):
-                return category
-        elif rule_type == 'default':
-            return category
-
-    return "Uncategorized"
-
 def parse_and_filter_amount(amt_str: str) -> float:
     # Parse the original amount from CSV (which may have negative sign and comma decimals).
     # If the numeric value is > 0, return None to indicate to filter out that row.
@@ -148,17 +124,13 @@ def format_amount(value: float) -> str:
         return ''
     return str(value).replace('.', ',')
 
-def process_file(
-    input_file: str,
-    category_rules: list,
-    output_folder: str,
-    file_index: int
-):
+def process_input_file(input_file: str) -> pd.DataFrame:
     # Read input CSV
     if not os.path.exists(input_file):
         logging.error(f"Input file not found: {input_file}")
         return
-
+    
+    logging.info(f"Processing {input_file}...")
     try:
         df = pd.read_csv(input_file, sep=';', dtype=str, keep_default_na=False)
     except Exception as e:
@@ -185,9 +157,6 @@ def process_file(
     # Convert the numeric float to a string with comma decimals for final display
     df['Amount_clean'] = df['Amount_float'].apply(format_amount)
 
-    # Categorize the note
-    df['Category'] = df['Title'].apply(lambda nt: categorize_expense(nt, category_rules))
-
     # Set Person, Type
     person_value = get_person(input_file)
     if 'Person' not in df.columns:
@@ -196,19 +165,51 @@ def process_file(
     if 'Type' not in df.columns:
         df['Type'] = "Actual"
 
+    # Rename columns
+    df['Amount'] = df['Amount_float']
+    df.rename(columns={"Amount_clean": "Amount DKK"}, inplace=True)
+    df.rename(columns={"Title": "Notes"}, inplace=True)
+
+    return df
+
+def categorize_expenses_re(df: pd.DataFrame, category_rules: list):
+    df['Category'] = df.apply(lambda row: categorize_row(row, category_rules), axis=1)
+
+def categorize_expenses_ml(df: pd.DataFrame, model):
+    features = df[["Notes", "Person", "Amount", "Year", "Month"]]
+
+    # Handle any remaining missing values
+    if features.isnull().any().any():
+        logging.warning(f"Missing values detected in features for file, filling with default values.")
+        features = features.fillna({
+            "Notes": "",
+            "Person": "Unknown",
+            "Amount": 0.0,
+            "Year": 0,
+            "Month": "Jan"  # Default month
+        })
+
+    # Predict Categories
+    try:
+        df['Category'] = model.predict(features)
+    except Exception as e:
+        logging.error(f"Error during prediction: {e}")
+
+def write_output_file(df: pd.DataFrame,
+    input_file: str,
+    output_folder: str,
+    file_index: int):
+
     # Select final columns
-    final_cols = ["Year", "Month", "Amount_clean", "Category", "Person", "Type", "Title"]
+    final_cols = ["Year", "Month", "Amount DKK", "Category", "Person", "Type", "Notes"]
     # Keep only columns that exist
     final_cols = [c for c in final_cols if c in df.columns]
     final_df = df[final_cols].copy()
-    # Rename columns
-    final_df.rename(columns={"Amount_clean": "Amount DKK"}, inplace=True)
-    final_df.rename(columns={"Title": "Notes"}, inplace=True)
 
     # Writes output CSV: 'Expenses-{Person}-{yyyy}{MM}{dd}-{hh}{mm}-{index}.csv'
     output_base = "Expenses"
     output_endname = datetime.now().strftime("%Y%m%d-%H%M")
-    output_name = f"{output_base}-{person_value}-{output_endname}-{file_index}.csv"
+    output_name = f"{output_base}-{get_person(input_file)}-{output_endname}-{file_index}.csv"
     output_path = os.path.join(output_folder, output_name)
 
     try:
@@ -217,7 +218,7 @@ def process_file(
     except Exception as e:
         logging.error(f"Failed writing output CSV {output_path}: {e}")
 
-def move_file(
+def move_file_to_archive(
     input_file: str,
     output_folder: str
 ):
@@ -233,16 +234,39 @@ def move_file(
         logging.error(f"Error: {str(e)}")
 
 def main():
-    config_file = "./config.yaml"
-    paths = load_config(config_file)
+    paths = load_config('config.yaml')
 
     # Load category rules
-    rules = load_category_rules(paths['category_file'])
-    logging.info(f"Loaded {len(rules)} category rules from {paths['category_file']}")
+    if not use_ml_model:
+        try:
+            rules = load_category_rules(paths['category_file'])
+            logging.info(f"Loaded {len(rules)} category rules from {paths['category_file']}")
+        except ValueError as e:
+            logging.error(e)
+            sys.exit(1)
 
+    # Load ML model
+    if use_ml_model:
+        try:
+            model = joblib.load(paths['model_file'])
+            logging.info(f"Loaded ML model from {paths['model_file']}")
+        except ValueError as e:
+            logging.error(e)
+            sys.exit(1)
+
+    processed_file_no = 0
     for index, csv_file in enumerate(glob.glob(os.path.join(paths['input_folder'], "*.csv"))):
-        process_file(csv_file, rules, paths['output_folder'], index)
-        move_file(csv_file, paths['processed_folder'])
+        df = process_input_file(csv_file)
+        if use_ml_model:
+            categorize_expenses_ml(df, model)
+        else:
+            categorize_expenses_re(df, rules)
+
+        write_output_file(df, csv_file, paths['output_folder'], index)
+        move_file_to_archive(csv_file, paths['processed_folder'])
+        processed_file_no += 1
+
+    logging.info(f"{processed_file_no} file(s) processed.")
 
 if __name__ == "__main__":
     main()
