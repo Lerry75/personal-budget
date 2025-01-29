@@ -142,7 +142,7 @@ def process_input_file(input_file: str) -> pd.DataFrame:
         return
 
     # Parse date (assume data is in yyyy/MM/dd format)
-    df['Date_parsed'] = pd.to_datetime(df['Booking date'], format='%Y/%m/%d', errors='coerce')
+    df['Date_parsed'] = pd.to_datetime(df['Booking date'], format='mixed', errors='coerce')
     df['Year'] = df['Date_parsed'].dt.year.fillna(0).astype(int).astype(str)
     df['Month'] = df['Date_parsed'].dt.month_name().str[:3].fillna('')
 
