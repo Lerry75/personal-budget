@@ -5,9 +5,9 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import VotingClassifier
-from sklearn.svm import SVC
 from sklearn.metrics import classification_report
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import GridSearchCV
 import joblib
 import os
 
@@ -23,9 +23,6 @@ def main():
     # Prepare data
     X = df[["Notes", "Person", "Amount", "Month"]]
     y = df['Category']  # target label
-
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
     numeric_features = ["Amount"]
     numeric_transformer = StandardScaler()
@@ -46,39 +43,64 @@ def main():
         remainder="drop"  # drop other columns if any
     )
 
-    # Use a VotingClassifier ensemble method.
-    # It aggregates multiple base classifiers 
-    # and the class with the highest average probability is selected (Soft voting).
-    # Define base classifiers
-    clf3 = RandomForestClassifier(n_estimators=100, random_state=42)
-    clf4 = SVC(probability=True, random_state=42)
-
-    # Create VotingClassifier
-    voting_clf = VotingClassifier(
-        estimators=[('rfc', clf3), ('svc', clf4)],
-        voting='soft'
-    )
+    # Use a RandomForest ensemble method, cross-validation, 
+    # and Grid Search for Hyperparameter tuning
+    rf = RandomForestClassifier(random_state=42)
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
     # Build the final pipeline: ColumnTransformer + Voting
     pipeline = Pipeline([
         ("preprocessor", preprocessor),
-        ("voting", voting_clf)
+        ("rf", rf)
     ])
 
-    print("X_train shape:", X_train.shape)
-    print("y_train shape:", y_train.shape)
+    # Evaluate the pipeline with cross-validation - default Hyperparameters
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    scores = cross_val_score(pipeline, X, y, cv=cv, scoring='accuracy', n_jobs=-1)
     
+    print("Pipeline cross-validation accuracy scores:", scores)
+    print("Mean accuracy:", scores.mean())
+
+    # Hyperparameter Tuning with GridSearchCV
+    # Define parameters to tune
+    param_grid = {
+        'rf__n_estimators': [100, 200],
+        'rf__max_depth': [None, 10, 20],
+        'rf__min_samples_split': [2, 5]
+    }
+
+    grid_search = GridSearchCV(
+        pipeline,
+        param_grid,
+        cv=cv,
+        scoring='accuracy',
+        n_jobs=-1,
+        verbose=2
+    )
+
+    grid_search.fit(X, y)
+
+    print("Best params:", grid_search.best_params_)
+    print("Best cross-validation accuracy:", grid_search.best_score_)
+
+    # Evaluate the Best Model
+    best_model = grid_search.best_estimator_
+    
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
     # Train
-    pipeline.fit(X_train, y_train)
+    best_model.fit(X_train, y_train)
 
     # Evaluate
-    y_pred = pipeline.predict(X_test)
+    y_pred = best_model.predict(X_test)
+
     print("Classification Report:")
     print(classification_report(y_test, y_pred))
 
     # Save the model
     model_path = os.path.join("models", "expense_categorizer_model.pkl")
-    joblib.dump(pipeline, model_path)
+    joblib.dump(best_model, model_path)
     print(f"Model saved to {model_path}")
 
 if __name__ == "__main__":
