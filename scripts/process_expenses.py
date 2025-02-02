@@ -8,6 +8,7 @@ import pandas as pd
 import yaml
 import joblib
 from categorymap import load_category_rules, categorize_row
+from dataset_enricher import enrich_dataframe, get_feature_list
 
 use_ml_model = False
 
@@ -176,18 +177,8 @@ def categorize_expenses_re(df: pd.DataFrame, category_rules: list):
     df['Category'] = df.apply(lambda row: categorize_row(row, category_rules), axis=1)
 
 def categorize_expenses_ml(df: pd.DataFrame, model):
-    features = df[["Notes", "Person", "Amount", "Year", "Month"]]
-
-    # Handle any remaining missing values
-    if features.isnull().any().any():
-        logging.warning(f"Missing values detected in features for file, filling with default values.")
-        features = features.fillna({
-            "Notes": "",
-            "Person": "Unknown",
-            "Amount": 0.0,
-            "Year": 0,
-            "Month": "Jan"  # Default month
-        })
+    enrich_dataframe(df)
+    features = df[get_feature_list()]
 
     # Predict Categories
     try:
