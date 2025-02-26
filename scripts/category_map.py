@@ -1,17 +1,24 @@
 import os
+import sys
 import re
 import yaml
+import logging
 
 def load_category_rules(yaml_file: str) -> list:
-     # Loads category classification rules from a YAML file.
-    if not os.path.exists(yaml_file):
-        raise ValueError(f"Category rules file not found: {yaml_file}")
-    with open(yaml_file, 'r', encoding='utf-8') as f:
-        config = yaml.safe_load(f)
-    rules = config.get('rules', [])
-    if not rules:
-        raise ValueError("No 'rules' key found in the YAML or it's empty.")
-    return rules
+    # Loads category classification rules from a YAML file.
+    try:
+        if not os.path.exists(yaml_file):
+            raise ValueError(f"Category rules file not found: {yaml_file}")
+        with open(yaml_file, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        rules = config.get('rules', [])
+        logging.info(f"Loaded {len(rules)} category rules from {yaml_file}")
+        if not rules:
+            raise ValueError("No 'rules' key found in the YAML or it's empty.")
+        return rules
+    except ValueError as e:
+        logging.error(e)
+        sys.exit(1)
 
 def evaluate_condition(row, column, operator, value) -> bool:
     if column not in row:
