@@ -9,6 +9,12 @@ from utils import get_person
 from dataset_enricher import enrich_dataframe, get_feature_list
 from category_map import categorize_row
 
+def categorize_entries(df_dict: { pd.DataFrame, pd.DataFrame }, resource: any):
+    if type(resource) is list:
+        categorize_entries_re(df_dict, resource)
+    else:
+        categorize_entries_ml(df_dict, resource)
+
 def categorize_entries_re(df_dict: { pd.DataFrame, pd.DataFrame }, category_rules: list):
     df_dict['expenses']['Category'] = df_dict['expenses'].apply(lambda row: categorize_row(row, category_rules), axis=1)
     df_dict['income']['Category'] = df_dict['income'].apply(lambda row: categorize_row(row, category_rules), axis=1)

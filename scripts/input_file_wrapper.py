@@ -6,19 +6,13 @@ from utils import parse_amount, get_person, format_amount
 def get_df_from_csv_nordea(input_file: str) -> { pd.DataFrame, pd.DataFrame }:
     # Read input CSV
     if not os.path.exists(input_file):
-        logging.error(f"Input file not found: {input_file}")
-        return
+        raise FileNotFoundError(f"Input file not found: {input_file}")
     
     logging.info(f"Processing {input_file}...")
-    try:
-        df = pd.read_csv(input_file, sep=';', dtype=str, keep_default_na=False)
-    except Exception as e:
-        logging.error(f"Failed reading CSV {input_file}: {e}")
-        return
+    df = pd.read_csv(input_file, sep=';', dtype=str, keep_default_na=False)
 
     if 'Booking date' not in df.columns or 'Amount' not in df.columns or 'Title' not in df.columns:
-        logging.error("CSV must have at least 'Booking date', 'Amount', 'Title' columns.")
-        return
+        raise ValueError("CSV must have at least 'Booking date', 'Amount', 'Title' columns.")
 
     # Parse date (assume data is in yyyy/MM/dd format)
     try:
