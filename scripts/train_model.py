@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.model_selection import GridSearchCV
-from dataset_enricher import enrich_dataframe, get_feature_list, get_text_feature, get_numeric_features, get_categorical_features, get_target_label
+from utils.dataset_enricher import enrich_dataframe, get_feature_list, get_text_feature, get_numeric_features, get_categorical_features, get_target_label
 import joblib
 import os
 

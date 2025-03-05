@@ -49,3 +49,16 @@ def format_amount(value: float) -> str:
     if pd.isnull(value):
         return ''
     return str(abs(value)).replace('.', ',')
+
+def clean_amount(amount_str: str) -> str:
+    """
+    Cleans the amount string by removing any thousand separators (periods)
+    and ensuring the amount starts with a minus sign.
+    """
+    # Remove any thousand separators (periods)
+    cleaned = amount_str.replace('.', '')
+    cleaned = cleaned.strip()
+    # Ensure the amount starts with a minus sign
+    if not cleaned.startswith('-'):
+        cleaned = '-' + cleaned
+    return cleaned

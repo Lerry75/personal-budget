@@ -5,7 +5,7 @@ import logging
 
 def load_config(config_file: str, use_ml_model: list = None) -> dict:
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.join(script_dir, '..', config_file)
+    config_file = os.path.join(script_dir, '..\\..', config_file)
     if not os.path.exists(config_file):
         logging.error(f"Config file not found: {config_file}")
         sys.exit(1)
@@ -23,7 +23,7 @@ def load_config(config_file: str, use_ml_model: list = None) -> dict:
 
     # Replacing wiwth absolute path
     for key in config['paths']:
-        config['paths'][key] = os.path.join(script_dir, "..", config['paths'][key])
+        config['paths'][key] = os.path.join(script_dir, "..\\..", config['paths'][key])
 
     setup_paths(config['paths'])
 

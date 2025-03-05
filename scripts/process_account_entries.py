@@ -1,10 +1,10 @@
 import os
 import logging
 import glob
-from config_loader import load_config
-from category_map import load_category_rules
-from input_file_wrapper import get_df_from_csv_nordea
-from entries_processor import load_category_model, categorize_entries, write_output_files, move_file_to_archive
+from utils.config_loader import load_config
+from utils.category_map import load_category_rules
+from utils.input_file_wrapper import get_df_from_csv_nordea
+from utils.entries_processor import load_category_model, categorize_entries, write_output_files, move_file_to_archive
 
 logging.basicConfig(
     level=logging.INFO,
