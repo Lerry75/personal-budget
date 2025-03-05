@@ -35,8 +35,8 @@ def categorize_entries_ml(df_dict: { pd.DataFrame, pd.DataFrame }, model):
 
 def load_category_model(model_file: str):
     try:
+        logging.info(f"Loading ML model from {model_file}")
         model = joblib.load(model_file)
-        logging.info(f"Loaded ML model from {model_file}")
         return model
     except Exception as e:
         logging.error(e)

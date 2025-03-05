@@ -3,7 +3,7 @@ import sys
 import yaml
 import logging
 
-def load_config(config_file: str, use_ml_model: list) -> dict:
+def load_config(config_file: str, use_ml_model: list = None) -> dict:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_file = os.path.join(script_dir, '..', config_file)
     if not os.path.exists(config_file):
@@ -28,10 +28,13 @@ def load_config(config_file: str, use_ml_model: list) -> dict:
     setup_paths(config['paths'])
 
     # Load feature flag
-    if 'app' in config:
-        if 'use_ml_model' in config['app']:
-            if config['app']['use_ml_model']:
-                use_ml_model[0] = True
+    if use_ml_model is None:
+        use_ml_model = [False]  # Default value if not provided
+    else:
+        if 'app' in config:
+            if 'use_ml_model' in config['app']:
+                if config['app']['use_ml_model']:
+                    use_ml_model[0] = True
 
     return config['paths']
 

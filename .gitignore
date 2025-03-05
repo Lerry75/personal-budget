@@ -170,8 +170,10 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# CSV files
+# CSV and pre-converted files
 *.csv
+input-csv/*.txt
+processed/*.txt
 
 # Model files
 *.pkl
