@@ -30,11 +30,11 @@ personal-budget/
 │       └── utils.py                  # Utility functions
 ├── data/                 # Training data for ML model
 ├── models/               # Trained ML models
-├── input-csv/            # Place bank account CSV files here
+├── input-account/        # Place bank account CSV files here
 ├── input-card/           # Place credit card TXT files here
-├── output-csv/           # Processed bank account files
+├── output-account/       # Processed bank account files
 ├── output-card/          # Processed credit card files
-├── processed-csv/        # Archived bank account files
+├── processed-account/    # Archived bank account files
 └── processed-card/       # Archived credit card files
 ```
 
@@ -42,7 +42,7 @@ personal-budget/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/personal-budget.git
+git clone https://github.com/lerry75/personal-budget.git
 cd personal-budget
 ```
 
@@ -62,7 +62,7 @@ pip install -r requirements.txt
 
 ### Processing Bank Account Statements
 
-1. Place your Nordea Netbank CSV files in the `input-csv` directory
+1. Place your Nordea Netbank CSV files in the `input-account` directory
 2. Run the processing script:
 ```bash
 python scripts/process_account_entries.py
@@ -71,8 +71,8 @@ python scripts/process_account_entries.py
 The script will:
 - Process all CSV files in the input directory
 - Categorize transactions using rules from `categoryrules.yaml` or ML model
-- Generate output files in `output-csv`
-- Move processed files to `processed-csv`
+- Generate output files in `output-account`
+- Move processed files to `processed-account`
 
 ### Processing Credit Card Statements
 
