@@ -35,9 +35,10 @@ def categorize_entries_ml(df_dict: { pd.DataFrame, pd.DataFrame }, model):
             df_dict[key]['Category'] = None
 
 def load_category_model(model_file: str):
+    logging.info(f"Loading ML model from '{os.path.relpath(model_file)}'...")
     try:
-        logging.info(f"Loading ML model from {model_file}")
         model = joblib.load(model_file)
+        logging.info(f"ML model successfully loaded.")
         return model
     except Exception as e:
         logging.error(e)
@@ -63,7 +64,7 @@ def write_output_files(df_dict: { pd.DataFrame, pd.DataFrame },
 
         try:
             final_df.to_csv(output_path, sep=';', index=False, encoding='utf-8-sig')
-            logging.info(f"Processed {input_file} -> {output_path} (total {len(final_df)} rows)")
+            logging.info(f"Processed '{os.path.relpath(input_file)}' -> '{os.path.relpath(output_path)}' (total {len(final_df)} rows).")
         except Exception as e:
             logging.error(f"Failed writing output CSV {output_path}: {e}")
 
@@ -82,7 +83,7 @@ def write_output_file(transactions: list, input_file:str, output_folder: str, fi
             writer = csv.DictWriter(outfile, fieldnames=fieldnames, delimiter=';', quoting=csv.QUOTE_NONE, escapechar='\\')
             writer.writeheader()
             writer.writerows(transactions)
-        logging.info(f"Processed {input_file} -> {output_filepath} (total {len(transactions)} rows)")
+        logging.info(f"Processed '{os.path.relpath(input_file)}' -> '{os.path.relpath(output_filepath)}' (total {len(transactions)} rows).")
     except Exception as e:
         logging.error(f"Failed writing output CSV {output_filepath}: {e}")
 
@@ -95,7 +96,7 @@ def move_file_to_archive(
         destination = os.path.join(output_folder, file_name)
 
         shutil.move(input_file, destination)
-        logging.info(f"File moved to {destination}.")
+        logging.info(f"File moved to '{os.path.relpath(destination)}'.")
     except FileNotFoundError:
         logging.error("Error: The file '{input_file}' does not exist.")
     except Exception as e:

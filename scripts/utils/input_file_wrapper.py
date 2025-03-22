@@ -13,7 +13,7 @@ def get_df_from_csv_nordea(input_file: str) -> { pd.DataFrame, pd.DataFrame }:
     if not os.path.exists(input_file):
         raise FileNotFoundError(f"Input file not found: {input_file}")
     
-    logging.info(f"Processing {input_file}...")
+    logging.info(f"Processing '{os.path.relpath(input_file)}'...")
     df = pd.read_csv(input_file, sep=';', dtype=str, keep_default_na=False)
 
     if 'Booking date' not in df.columns or 'Amount' not in df.columns or 'Title' not in df.columns:
@@ -50,8 +50,8 @@ def get_df_from_csv_nordea(input_file: str) -> { pd.DataFrame, pd.DataFrame }:
 
     # Create dataframes for income and expenses
     income = df[df["Amount_float"] > 0]
-    expenses = df[df["Amount_float"] < 0]
-    expenses["Amount_float"] = expenses["Amount_float"].abs()
+    expenses = df[df["Amount_float"] < 0].copy()  # Create an explicit copy
+    expenses.loc[:, "Amount_float"] = expenses["Amount_float"].abs()  # Use .loc for assignment
 
     return { "income": income, "expenses": expenses }
 
@@ -82,7 +82,7 @@ def parse_cc_statement_file(input_filename: str) -> list:
 
     try:
         with open(input_filename, "r", encoding="utf-8") as infile:
-            logging.info(f"Opened input file '{input_filename}' for reading.")
+            logging.info(f"Opened input file '{os.path.relpath(input_filename)}' for reading.")
             for lineno, line in enumerate(infile, start=1):
                 line = line.rstrip("\n")
                 if not line.strip():

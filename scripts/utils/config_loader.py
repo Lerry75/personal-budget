@@ -39,35 +39,46 @@ def load_config(config_file: str, use_ml_model: list = None) -> dict:
     return config['paths']
 
 def setup_paths(paths: dict):
-    # Create input folder if not exist
-    input_folder = paths.get('input_folder')
-    if input_folder and not os.path.exists(input_folder):
-        try:
-            os.makedirs(input_folder)
-            logging.info(f"Created folder: {input_folder}")
-        except Exception as e:
-            logging.error(f"Failed to create folder {input_folder}: {e}")
-            sys.exit(1)
+    # Create folder if not exist
+    for key in paths:
+        if key.endswith('_folder'):
+            folder = paths[key]
+            if not os.path.exists(folder):
+                try:
+                    os.makedirs(folder)
+                    logging.info(f"Created folder: {folder}")
+                except Exception as e:
+                    logging.error(f"Failed to create folder {folder}: {e}")
+                    sys.exit(1)
 
-    # Create processed folder if not exist
-    processed_folder = paths.get('processed_folder')
-    if processed_folder and not os.path.exists(processed_folder):
-        try:
-            os.makedirs(processed_folder)
-            logging.info(f"Created folder: {processed_folder}")
-        except Exception as e:
-            logging.error(f"Failed to create folder {processed_folder}: {e}")
-            sys.exit(1)
+    # input_folder = paths.get('input_folder')
+    # if input_folder and not os.path.exists(input_folder):
+    #     try:
+    #         os.makedirs(input_folder)
+    #         logging.info(f"Created folder: {input_folder}")
+    #     except Exception as e:
+    #         logging.error(f"Failed to create folder {input_folder}: {e}")
+    #         sys.exit(1)
 
-    # Create output folder if not exist
-    output_folder = paths.get('output_folder')
-    if output_folder and not os.path.exists(output_folder):
-        try:
-            os.makedirs(output_folder)
-            logging.info(f"Created folder: {output_folder}")
-        except Exception as e:
-            logging.error(f"Failed to create folder {output_folder}: {e}")
-            sys.exit(1)
+    # # Create processed folder if not exist
+    # processed_folder = paths.get('processed_folder')
+    # if processed_folder and not os.path.exists(processed_folder):
+    #     try:
+    #         os.makedirs(processed_folder)
+    #         logging.info(f"Created folder: {processed_folder}")
+    #     except Exception as e:
+    #         logging.error(f"Failed to create folder {processed_folder}: {e}")
+    #         sys.exit(1)
+
+    # # Create output folder if not exist
+    # output_folder = paths.get('output_folder')
+    # if output_folder and not os.path.exists(output_folder):
+    #     try:
+    #         os.makedirs(output_folder)
+    #         logging.info(f"Created folder: {output_folder}")
+    #     except Exception as e:
+    #         logging.error(f"Failed to create folder {output_folder}: {e}")
+    #         sys.exit(1)
 
     # Check category file
     category_file = paths.get('category_file')

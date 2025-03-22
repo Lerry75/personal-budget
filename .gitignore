@@ -172,8 +172,9 @@ cython_debug/
 
 # CSV and pre-converted files
 *.csv
-input-csv/*.txt
-processed/*.txt
+*.xlsx
+input-card/*.txt
+processed-card/*.txt
 
 # Model files
 *.pkl

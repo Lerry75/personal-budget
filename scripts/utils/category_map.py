@@ -6,13 +6,14 @@ import logging
 
 def load_category_rules(yaml_file: str) -> list:
     # Loads category classification rules from a YAML file.
+    logging.info(f"Loading category rules from '{os.path.relpath(yaml_file)}'...")
     try:
         if not os.path.exists(yaml_file):
             raise ValueError(f"Category rules file not found: {yaml_file}")
         with open(yaml_file, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
         rules = config.get('rules', [])
-        logging.info(f"Loaded {len(rules)} category rules from {yaml_file}")
+        logging.info(f"{len(rules)} category rules successfully loaded.")
         if not rules:
             raise ValueError("No 'rules' key found in the YAML or it's empty.")
         return rules

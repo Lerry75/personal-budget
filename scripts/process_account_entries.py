@@ -20,8 +20,8 @@ def main():
     key_file = {True: 'model_file', False: 'category_file'}[use_ml_model[0]]
     loader = {True: load_category_model, False: load_category_rules}[use_ml_model[0]]
     resource = loader(paths[key_file])
-    logging.info(f"{paths[key_file]} loaded.")
 
+    logging.info("Starting account statement entries processing...")
     processed_file_no = 0
     csv_files = glob.glob(os.path.join(paths['input_folder'], "*.csv"))
     for index, csv_file in enumerate(csv_files):
@@ -31,6 +31,7 @@ def main():
             write_output_files(entries, csv_file, paths['output_folder'], index)
             move_file_to_archive(csv_file, paths['processed_folder'])
             processed_file_no += 1
+            logging.info(f"Successfully processed '{os.path.relpath(csv_file)}'.")
         except Exception as e:
             logging.error(f"Failed to process {csv_file}: {type(e).__name__} - {e}")
             continue

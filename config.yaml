@@ -1,9 +1,17 @@
 paths:
-  input_folder: "input-csv"
-  processed_folder: "processed"
-  output_folder: "output-csv"
+  # Card statement processing
+  card_input_folder: "input-card"
+  card_processed_folder: "processed-card"
+  card_output_folder: "output-card"
+  
+  # Account statement processing
+  input_folder: "input-account"
+  processed_folder: "processed-account"
+  output_folder: "output-account"
+  
+  # Categorization resources
   category_file: "categoryrules.yaml"
-  model_file: "models\\expense_categorizer_model.pkl"
+  model_file: "models/expense_categorizer_model.pkl"
 
 app:
   use_ml_model: true
